@@ -1,0 +1,29 @@
+{
+    "rickshaw-benchmark": {
+        "schema": {
+            "version": "2020.05.18"
+        }
+    },
+    "benchmark": "osnoise",
+    "controller" : {
+        "post-script" : "%bench-dir%/osnoise-post-process"
+    },
+    "client" : {
+        "files-from-controller": [
+            {
+                "src": "%bench-dir%/osnoise-base",
+                "dest": "/usr/bin/"
+            },
+            {
+                "src": "%bench-dir%/osnoise-client",
+                "dest": "/usr/bin/"
+            },
+            {
+                "src": "%bench-dir%/osnoise-get-runtime",
+                "dest": "/usr/bin/"
+            }
+        ],
+        "runtime" : "osnoise-get-runtime",
+        "start" : "osnoise-client"
+    }
+}
