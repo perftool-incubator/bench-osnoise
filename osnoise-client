@@ -10,17 +10,6 @@ dump_runtime
 validate_label
 validate_sw_prereqs
 
-if [ -z "${WORKLOAD_CPUS}" ]; then
-    exit_error "WORKLOAD_CPUS is not defined. This must be defined to run osnoise"
-else
-    echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
-fi
-if [ -z "${HK_CPUS}" ]; then
-    exit_error "HK_CPUS is not defined.  This must be defined to run osnoise"
-else
-    echo "HK_CPUS: ${HK_CPUS}"
-fi
-
 no_load_balance=0
 threshold=1
 priority=""
@@ -28,8 +17,9 @@ duration=60
 smt="on"
 period=1000000
 runtime=950000
+warm_up=""
 
-opts=$(getopt -q -o "" --longoptions "cpus:,threshold:,priority:,no-load-balance:,duration:,smt:,period:,runtime:" -n "getopt.sh" -- "$@");
+opts=$(getopt -q -o "" --longoptions "cpus:,threshold:,priority:,no-load-balance:,duration:,smt:,period:,runtime:,house-keeping:,warm-up:" -n "getopt.sh" -- "$@");
 if [ $? -ne 0 ]; then
     printf -- "\tUnrecognized option specified\n\n"
     exit 1
@@ -77,6 +67,16 @@ while true; do
             no_load_balance=$1
             shift;
             ;;
+        --house-keeping)
+	   shift;
+	   house_keeping=$1
+	   shift;
+	   ;;
+	--warm-up)
+	   shift;
+	   warm_up=" --warm-up $1"
+	   shift;
+	   ;;
         --)
             shift;
             break
@@ -87,11 +87,30 @@ while true; do
     esac
 done
 
-if [ "$no_load_balance" == "1" ]; then
-     disable_balance $cpus_list
+if [ -z "${WORKLOAD_CPUS}" ] && [ -z "${cpus}" ]; then
+    exit_error "Unable to auto-detect WORKLOAD_CPUS and the param 'cpus' is not specified."
 fi
 
-# adjust CPUs to use
+if [ -z "${HK_CPUS}"  ] && [ -z "${house_keeping}" ]; then
+    exit_error "Unable to auto-detect HK_CPUS and the param 'house-keeping' is not specified."
+fi
+
+# Override WORKLOAD_CPUS w/ cpus param (if defined)
+if [ -n "${cpus}" ]; then
+    echo "'cpus' param is defined: ${cpus}"
+    # Cpu range to comma separated list: e.g. 1-5,10-12 ==> 1,2,3,4,5,10,11,12
+    cmd="${TOOLBOX_HOME}/bin/cpumask.py --cpus ${cpus}"
+    echo "about to run: ${cmd}"
+    CMD_OUTPUT=$(${cmd})
+    echo -e "${CMD_OUTPUT}"
+    WORKLOAD_CPUS=$(echo -e "${CMD_OUTPUT}" | grep cpulist | awk -F= '{print $2}')
+    echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
+else
+    # Fallback to auto-detected WORKLOAD_CPUS list
+    echo "'cpus' undefined, using the auto-detected workload cpus: $WORKLOAD_CPUS."
+fi
+
+# Update WORKLOAD_CPUS smt-wise
 cpu_str=""
 for cpu in $(echo $WORKLOAD_CPUS | sed -e "s/,/ /g"); do
     cpu_str+=" --cpu $cpu"
@@ -103,9 +122,39 @@ echo -e "${CMD_OUTPUT}"
 WORKLOAD_CPUS=$(echo -e "${CMD_OUTPUT}" | grep "final cpus:" | awk '{ print $3 }')
 echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
 
-# Run on the workload cpus (exclude hk cpus by default)
-if [ -z ${cpus} ]; then
-    cpus=${WORKLOAD_CPUS}
+# Override HK_CPUS w/ house-keeping param (if defined)
+if [ -n $house_keeping ]; then
+    echo "'house-keeping' param is defined: ${house_keeping}"
+    # Cpu range to comma separated list: e.g. 2-3 ==> 2,3
+    cmd="${TOOLBOX_HOME}/bin/cpumask.py --cpus ${house_keeping}"
+    echo "about to run: ${cmd}"
+    CMD_OUTPUT=$(${cmd})
+    echo -e "${CMD_OUTPUT}"
+    HK_CPUS=$(echo -e "${CMD_OUTPUT}" | grep cpulist | awk -F= '{print $2}')
+    echo "HK_CPUS: ${HK_CPUS}"
+else
+    # fallback to auto-detected HK_CPUS
+    echo "'house-keeping' undefined, using the auto-detected house-keeping: $HK_CPUS."
+fi
+
+# Update HK_CPUS smt-wise
+cpu_str=""
+for cpu in $(echo $HK_CPUS | sed -e "s/,/ /g"); do
+    if [[ ",$WORKLOAD_CPUS," =~ ",$cpu," ]]; then
+        exit_error "House-keeping must NOT overlap with the workload cpus."
+    fi
+    cpu_str+=" --cpu $cpu"
+done
+cmd="${TOOLBOX_HOME}/bin/get-cpus-ordered.py --smt ${smt} ${cpu_str}"
+echo "about to run: ${cmd}"
+CMD_OUTPUT=$(${cmd})
+echo -e "${CMD_OUTPUT}"
+HK_CPUS=$(echo -e "${CMD_OUTPUT}" | grep "final cpus:" | awk '{ print $3 }')
+echo "HK_CPUS: ${HK_CPUS}"
+
+if [ "$no_load_balance" == "1" ]; then
+     echo "Disabling load balance on cpus ${cpus_list}..."
+     disable_balance $cpus_list
 fi
 
 echo
@@ -123,7 +172,7 @@ if [ $? != 0 ]; then
     exit_error "${output}"
 fi
 
-cmd="taskset -c ${WORKLOAD_CPUS} rtla osnoise top --quiet --duration ${duration}s --threshold ${threshold} --cpus ${WORKLOAD_CPUS} --period ${period} --runtime ${runtime} $priority"
+cmd="taskset -c ${HK_CPUS},${WORKLOAD_CPUS} rtla osnoise top --quiet --duration ${duration}s --threshold ${threshold} --cpus ${WORKLOAD_CPUS} --period ${period} --runtime ${runtime} $priority --house-keeping ${HK_CPUS} ${warm_up}"
 echo "About to run: $cmd"
 date +%s.%N >begin.txt
 $cmd >osnoise-bin-stderrout.txt 2>&1
@@ -137,6 +186,7 @@ fi
 
 
 if [ "$no_load_balance" == "1" ]; then
+     echo "Enabling load balance on cpus ${cpus_list}..."
      enable_balance $cpus_list
 fi
 
