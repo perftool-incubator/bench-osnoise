@@ -122,6 +122,15 @@ echo -e "${CMD_OUTPUT}"
 WORKLOAD_CPUS=$(echo -e "${CMD_OUTPUT}" | grep "final cpus:" | awk '{ print $3 }')
 echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
 
+#(rfolco): Workaround for buffer limitation on osnoise/cpus (256 chars)
+# Transform the list of comma-separated cpus into range(s) e.g. 1,2,3->1-3
+cmd="${TOOLBOX_HOME}/bin/get-cpu-range.py ${WORKLOAD_CPUS}"
+echo "about to run: ${cmd}"
+CMD_OUTPUT=$(${cmd})
+echo -e "${CMD_OUTPUT}"
+WORKLOAD_CPUS=${CMD_OUTPUT}
+echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
+
 # Override HK_CPUS w/ house-keeping param (if defined)
 if [ -n $house_keeping ]; then
     echo "'house-keeping' param is defined: ${house_keeping}"
@@ -150,6 +159,15 @@ echo "about to run: ${cmd}"
 CMD_OUTPUT=$(${cmd})
 echo -e "${CMD_OUTPUT}"
 HK_CPUS=$(echo -e "${CMD_OUTPUT}" | grep "final cpus:" | awk '{ print $3 }')
+echo "HK_CPUS: ${HK_CPUS}"
+
+#(rfolco): Workaround for buffer limitation on osnoise/cpus (256 chars)
+# Transform the list of comma-separated cpus into range(s) e.g. 1,2,3->1-3
+cmd="${TOOLBOX_HOME}/bin/get-cpu-range.py ${HK_CPUS}"
+echo "about to run: ${cmd}"
+CMD_OUTPUT=$(${cmd})
+echo -e "${CMD_OUTPUT}"
+HK_CPUS=${CMD_OUTPUT}
 echo "HK_CPUS: ${HK_CPUS}"
 
 if [ "$no_load_balance" == "1" ]; then
