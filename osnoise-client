@@ -132,7 +132,7 @@ WORKLOAD_CPUS=${CMD_OUTPUT}
 echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
 
 # Override HK_CPUS w/ house-keeping param (if defined)
-if [ -n $house_keeping ]; then
+if [ -n "${house_keeping}" ]; then
     echo "'house-keeping' param is defined: ${house_keeping}"
     # Cpu range to comma separated list: e.g. 2-3 ==> 2,3
     cmd="${TOOLBOX_HOME}/bin/cpumask.py --cpus ${house_keeping}"
