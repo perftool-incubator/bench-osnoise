@@ -171,8 +171,8 @@ HK_CPUS=${CMD_OUTPUT}
 echo "HK_CPUS: ${HK_CPUS}"
 
 if [ "$no_load_balance" == "1" ]; then
-     echo "Disabling load balance on cpus ${cpus_list}..."
-     disable_balance $cpus_list
+     echo "Disabling load balance on cpus ${WORKLOAD_CPUS}..."
+     disable_balance $WORKLOAD_CPUS
 fi
 
 echo
@@ -204,8 +204,8 @@ fi
 
 
 if [ "$no_load_balance" == "1" ]; then
-     echo "Enabling load balance on cpus ${cpus_list}..."
-     enable_balance $cpus_list
+     echo "Enabling load balance on cpus ${WORKLOAD_CPUS}..."
+     enable_balance $WORKLOAD_CPUS
 fi
 
 if [ $rc -gt 0 ]; then
