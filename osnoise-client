@@ -132,7 +132,7 @@ WORKLOAD_CPUS=${CMD_OUTPUT}
 echo "WORKLOAD_CPUS: ${WORKLOAD_CPUS}"
 
 # Override HK_CPUS w/ house-keeping param (if defined)
-if [ -n $house_keeping ]; then
+if [ -n "${house_keeping}" ]; then
     echo "'house-keeping' param is defined: ${house_keeping}"
     # Cpu range to comma separated list: e.g. 2-3 ==> 2,3
     cmd="${TOOLBOX_HOME}/bin/cpumask.py --cpus ${house_keeping}"
@@ -171,8 +171,8 @@ HK_CPUS=${CMD_OUTPUT}
 echo "HK_CPUS: ${HK_CPUS}"
 
 if [ "$no_load_balance" == "1" ]; then
-     echo "Disabling load balance on cpus ${cpus_list}..."
-     disable_balance $cpus_list
+     echo "Disabling load balance on cpus ${WORKLOAD_CPUS}..."
+     disable_balance $WORKLOAD_CPUS
 fi
 
 echo
@@ -204,8 +204,8 @@ fi
 
 
 if [ "$no_load_balance" == "1" ]; then
-     echo "Enabling load balance on cpus ${cpus_list}..."
-     enable_balance $cpus_list
+     echo "Enabling load balance on cpus ${WORKLOAD_CPUS}..."
+     enable_balance $WORKLOAD_CPUS
 fi
 
 if [ $rc -gt 0 ]; then
