@@ -12,5 +12,5 @@ Scripts and configuration to run the [rtla osnoise](https://man7.org/linux/man-p
 | `osnoise-base` | Base setup shared by other scripts |
 | `osnoise-client` | Client-side benchmark execution |
 | `osnoise-get-runtime` | Runtime extraction |
-| `osnoise-post-process` | Post-processing: parses osnoise output into crucible metrics |
+| `osnoise-post-process.py` | Post-processing: parses osnoise output into crucible metrics |
 | `workshop.json` | Engine image build requirements |
