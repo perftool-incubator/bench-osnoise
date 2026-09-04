@@ -5,7 +5,7 @@ Scripts and configuration to run the rtla osnoise benchmark within the crucible 
 
 ## Language
 - Bash for client execution scripts
-- Python for post-processing (`osnoise-post-process`)
+- Python for post-processing (`osnoise-post-process.py`)
 
 ## Key Files
 | File | Purpose |
@@ -16,7 +16,7 @@ Scripts and configuration to run the rtla osnoise benchmark within the crucible 
 | `osnoise-base` | Base setup shared by other scripts |
 | `osnoise-client` | Client-side benchmark execution |
 | `osnoise-get-runtime` | Extracts runtime from command-line options |
-| `osnoise-post-process` | Parses osnoise output into crucible metrics |
+| `osnoise-post-process.py` | Parses osnoise output into crucible metrics |
 | `workshop.json` | Engine image build requirements |
 
 ## Conventions

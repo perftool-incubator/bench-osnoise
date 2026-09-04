@@ -6,7 +6,7 @@
     },
     "benchmark": "osnoise",
     "controller" : {
-        "post-script" : "%bench-dir%/osnoise-post-process"
+        "post-script" : "%bench-dir%/osnoise-post-process.py"
     },
     "client" : {
         "files-from-controller": [
